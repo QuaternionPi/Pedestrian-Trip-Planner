@@ -5,7 +5,7 @@ import codecs
 # read a single DBF file
 def read_dbf(file: os.path):
     with codecs.open(file, "rb") as handle:
-        handle.seek(1000)
+        handle.seek(162)
         byte = handle.read(1000)
         print(byte)
 
@@ -13,7 +13,7 @@ def read_dbf(file: os.path):
 
 
 # read many DBF files in the same folder
-def read_dbf(folder: os.path, files: list[str]):
+def read_many_dbf(folder: os.path, files: list[str]):
     result = []
     for file in files:
         path = os.path.join(folder, file)
