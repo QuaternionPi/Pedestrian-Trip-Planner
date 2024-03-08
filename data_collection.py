@@ -2,19 +2,28 @@ import os
 import codecs
 from collections import namedtuple
 
+
 # parses acording to https://www.geofabrik.de/data/geofabrik-osm-gis-standard-0.7.pdf
 
 
-Attribute = namedtuple("Attribute", ["name", "size"])
 Schema = namedtuple("Schema", ["attributes", "total_size"])
+Attribute = namedtuple("Attribute", ["name", "datatype", "size"])
 
 
 def read_osm_header_line(line: str) -> Attribute:
     if len(line) != 32:
         raise Exception("Header lines must be 32 characters long")
     name: str = line[0:11].rstrip(b"\x00").decode("utf-8")
+    datatype: str = line.decode("utf-8")[11]
     size: int = line[16]
-    output: Attribute = Attribute(name, size)
+    match datatype:
+        case "C":
+            datatype = str
+        case "N":
+            datatype = int
+        case _:
+            raise Exception(f"Attribute datatype type: '{datatype}' is unknown")
+    output: Attribute = Attribute(name, datatype, size)
     return output
 
 
@@ -35,23 +44,17 @@ def read_osm_header(handle: codecs.StreamReaderWriter) -> Schema:
     return output
 
 
-def read_osm_element(text: str):
-    """
-    id INTEGER (4 Bytes) Id of this feature. Unique in this layer.
+def read_osm_element(text: str, schema: Schema):
+    if len(text) - 1 != schema.total_size:
+        raise Exception("text must be one less than the total size of the schema")
+    depth = 0
+    for attribute in schema.attributes:
+        size = attribute.size
+        reader = attribute.datatype
+        section = text[depth : depth + size]
+        print(f"Attribute: {attribute.name} Value: {reader(section)}")
 
-    osm_id BIGINT (8 Bytes) OSM Id taken from the Id of this feature (node_id, way_id, or relation_id) in the OSM database.
-
-    lastchange TIMESTAMP WITHOUT TIME ZONE (8 Bytes) Last change of this feature. Comes from the OSM last_changed attribute.
-
-    code SMALLINT (2 Bytes) 4 digit code (between 1000 and 9999) defining the class of this feature. The first
-    one or two digits define the layer, the last two or three digits the class inside a layer.
-
-    fclass VARCHAR(40) Class name of this feature.
-
-    name VARCHAR(100) Name of this feature, like a street or place name
-
-    total length 4 + 8 + 8 + 2 + 40 + 100 = 162
-    """
+        depth += size
 
 
 # read a single DBF file
@@ -61,7 +64,7 @@ def read_dbf(file: os.path):
         print(schema)
         for i in range(10):
             line: str = handle.read(schema.total_size + 1).decode("utf-8")
-            print(line)
+            read_osm_element(line, schema)
 
     return file
 
