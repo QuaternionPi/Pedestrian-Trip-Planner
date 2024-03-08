@@ -10,7 +10,7 @@ Schema = namedtuple("Schema", ["attributes", "total_size"])
 Attribute = namedtuple("Attribute", ["name", "datatype", "size"])
 
 
-def read_osm_header_line(line: str) -> Attribute:
+def read_dbf_header_line(line: str) -> Attribute:
     if len(line) != 32:
         raise Exception("Header lines must be 32 characters long")
     name: str = line[0:11].rstrip(b"\x00").decode("utf-8")
@@ -27,7 +27,7 @@ def read_osm_header_line(line: str) -> Attribute:
     return output
 
 
-def read_osm_header(handle: codecs.StreamReaderWriter) -> Schema:
+def read_dbf_header(handle: codecs.StreamReaderWriter) -> Schema:
     handle.read(32)
     attributes: list[Attribute] = []
     total_size = 0
@@ -36,7 +36,7 @@ def read_osm_header(handle: codecs.StreamReaderWriter) -> Schema:
         if start[0:2] == b"\r ":  # break if start of body
             break
         line: str = start + handle.read(30)
-        attribute: Attribute = read_osm_header_line(line)
+        attribute: Attribute = read_dbf_header_line(line)
         attributes.append(attribute)
         total_size += attribute.size
 
@@ -44,15 +44,17 @@ def read_osm_header(handle: codecs.StreamReaderWriter) -> Schema:
     return output
 
 
-def read_osm_element(text: str, schema: Schema):
+def read_dbf_element(text: str, schema: Schema):
     if len(text) - 1 != schema.total_size:
         raise Exception("text must be one less than the total size of the schema")
+
     depth = 0
+    data = {}
     for attribute in schema.attributes:
         size = attribute.size
         reader = attribute.datatype
         section = text[depth : depth + size]
-        print(f"Attribute: {attribute.name} Value: {reader(section)}")
+        data[attribute.name] = reader(section)
 
         depth += size
 
@@ -60,11 +62,10 @@ def read_osm_element(text: str, schema: Schema):
 # read a single DBF file
 def read_dbf(file: os.path):
     with codecs.open(file, "rb") as handle:
-        schema: Schema = read_osm_header(handle)
-        print(schema)
+        schema: Schema = read_dbf_header(handle)
         for i in range(10):
             line: str = handle.read(schema.total_size + 1).decode("utf-8")
-            read_osm_element(line, schema)
+            read_dbf_element(line, schema)
 
     return file
 
