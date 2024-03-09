@@ -4,13 +4,17 @@ from util import info, warning
 from collections import namedtuple
 
 
-# parses acording to https://www.geofabrik.de/data/geofabrik-osm-gis-standard-0.7.pdf
+# Parses acording to https://www.geofabrik.de/data/geofabrik-osm-gis-standard-0.7.pdf
 
-
+# Schema of a DBF
 Schema = namedtuple("Schema", ["attributes", "total_size"])
+# Attribute of a DBF
 Attribute = namedtuple("Attribute", ["name", "datatype", "size"])
+# Read-in DBF
+DBase = namedtuple("DBF", ["elements", "schema"])
 
 
+# Read a single 32 byte block in the header of a DBF file
 def read_dbf_header_line(line: str) -> Attribute:
     if len(line) != 32:
         raise Exception("Header lines must be 32 characters long")
@@ -28,10 +32,11 @@ def read_dbf_header_line(line: str) -> Attribute:
     return output
 
 
+# Read the header of a DBF file
 def read_dbf_header(handle: codecs.StreamReaderWriter) -> Schema:
     handle.read(32)
     attributes: list[Attribute] = []
-    total_size = 0
+    total_size: int = 0
     while True:
         start = handle.read(2)
         if start[0:2] == b"\r ":  # break if start of body
@@ -45,24 +50,30 @@ def read_dbf_header(handle: codecs.StreamReaderWriter) -> Schema:
     return output
 
 
+# Read a single entry in the body of a DBF file
 def read_dbf_body_line(text: str, schema: Schema) -> dict[str, int]:
     if len(text) < schema.total_size:
         raise Exception("Text must be one less than the total size of the schema")
 
-    depth = 0
-    data = {}
+    depth: int = 0
+    data: dict[str, int] = {}
     for attribute in schema.attributes:
-        size = attribute.size
-        reader = attribute.datatype
-        section = text[depth : depth + size]
-        data[attribute.name] = reader(section)
+        size: int = attribute.size
+        reader: type = attribute.datatype
+        section: str = text[depth : depth + size]
+        name: str = attribute.name
+        data[attribute] = reader(section)
 
         depth += size
     return data
 
 
-def read_dbf_body(handle: codecs.StreamReaderWriter, schema: Schema):
+# Read the body of a DBF file
+def read_dbf_body(
+    handle: codecs.StreamReaderWriter, schema: Schema
+) -> list[dict[str, int]]:
     request_size: int = schema.total_size + 1
+    result: list[dict[str, int]] = []
     while True:
         line: str = handle.read(request_size).decode("utf-8")
         if line.isascii() == False:
@@ -70,29 +81,34 @@ def read_dbf_body(handle: codecs.StreamReaderWriter, schema: Schema):
             return None
         if len(line) + 1 < request_size:
             break
-        read_dbf_body_line(line, schema)
+        result.append(read_dbf_body_line(line, schema))
+    return result
 
 
-# read a single DBF file
-def read_dbf(file: str):
+# Read a single DBF file
+def read_dbf(file: str) -> DBase:
+    elements: list[dict[str, int]] = []
     with codecs.open(file, "rb") as handle:
         schema: Schema = read_dbf_header(handle)
-        read_dbf_body(handle, schema)
+        element: dict[str, int] = read_dbf_body(handle, schema)
+        elements.append(element)
 
     info(f"read file {os.path.basename(file)}")
-    return file
+    return DBase(elements, schema)
 
 
-# read many DBF files in the same folder
-def read_many_dbf(folder: os.path, files: list[str]):
+# Read many DBF files in the same folder
+def read_many_dbf(folder: os.path, files: list[str]) -> list[DBase]:
     result = []
     for file in files:
-        path = os.path.join(folder, file)
-        single_result = read_dbf(path)
+        path: str = os.path.join(folder, file)
+        single_result: DBase = read_dbf(path)
         result.append(single_result)
     return result
 
 
+# Get the geometry type of a DBF file's code
+# This may break with newer editions of the Geofabik file schema
 def geometry(code: int) -> str:
     descrimanent = code // 100
     match descrimanent:
