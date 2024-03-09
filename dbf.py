@@ -9,9 +9,9 @@ from collections import namedtuple
 # Schema of a DBF
 Schema = namedtuple("Schema", ["attributes", "total_size"])
 # Attribute of a DBF
-Attribute = namedtuple("Attribute", ["name", "datatype", "size"])
+Attribute = namedtuple("Attribute", ["name", "datatype", "parser", "size"])
 # Read-in DBF
-DBase = namedtuple("DBF", ["elements", "schema"])
+DBase = namedtuple("DBF", ["filename", "elements", "schema"])
 
 
 # Read a single 32 byte block in the header of a DBF file
@@ -20,15 +20,18 @@ def read_header_line(line: str) -> Attribute:
         raise Exception("Header lines must be 32 characters long")
     name: str = line[0:11].rstrip(b"\x00").decode("utf-8")
     datatype: str = line.decode("utf-8")[11]
+    parser: lambda x: x = None
     size: int = line[16]
     match datatype:
         case "C":
-            datatype = str
+            datatype = "str"
+            parser = lambda x: str(x).strip()
         case "N":
-            datatype = int
+            datatype = "int"
+            parser = lambda x: int(x)
         case _:
             raise Exception(f"Attribute datatype type: '{datatype}' is unknown")
-    output: Attribute = Attribute(name, datatype, size)
+    output: Attribute = Attribute(name, datatype, parser, size)
     return output
 
 
@@ -59,10 +62,11 @@ def read_body_line(text: str, schema: Schema) -> dict[str, int]:
     data: dict[str, int] = {}
     for attribute in schema.attributes:
         size: int = attribute.size
-        reader: type = attribute.datatype
+        parser = attribute.parser
         section: str = text[depth : depth + size]
         name: str = attribute.name
-        data[attribute] = reader(section)
+
+        data[name] = parser(section)
 
         depth += size
     return data
@@ -74,11 +78,13 @@ def read_body(
 ) -> list[dict[str, int]]:
     request_size: int = schema.total_size + 1
     result: list[dict[str, int]] = []
+    total_read: int = 0
     while True:
         line: str = handle.read(request_size).decode("utf-8")
+        total_read += request_size
         if line.isascii() == False:
             warning(f'Removed non-ascii entry "{line}"')
-            return None
+            continue
         if len(line) + 1 < request_size:
             break
         result.append(read_body_line(line, schema))
@@ -90,11 +96,11 @@ def read(file: str) -> DBase:
     elements: list[dict[str, int]] = []
     with codecs.open(file, "rb") as handle:
         schema: Schema = read_header(handle)
-        element: dict[str, int] = read_body(handle, schema)
-        elements.append(element)
+        elements: list[dict[str, int]] = read_body(handle, schema)
 
-    info(f"read file {os.path.basename(file)}")
-    return DBase(elements, schema)
+    filename = os.path.basename(file)
+    info(f"read file {filename}")
+    return DBase(filename, elements, schema)
 
 
 # Read many DBF files in the same folder
