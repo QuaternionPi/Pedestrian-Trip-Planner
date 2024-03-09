@@ -1,6 +1,5 @@
 from sys import argv
-import data_collection
-import os
+import dbf
 
 # main function and entry point of program program execution
 if __name__ == "__main__":
@@ -15,5 +14,5 @@ if __name__ == "__main__":
         "gis_osm_traffic_a_free_1.dbf",
         "gis_osm_transport_a_free_1.dbf",
     ]
-    data = data_collection.read_many_dbf(folder, files)
+    data = dbf.read_many(folder, files)
     pass

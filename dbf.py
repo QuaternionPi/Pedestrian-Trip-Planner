@@ -15,7 +15,7 @@ DBase = namedtuple("DBF", ["elements", "schema"])
 
 
 # Read a single 32 byte block in the header of a DBF file
-def read_dbf_header_line(line: str) -> Attribute:
+def read_header_line(line: str) -> Attribute:
     if len(line) != 32:
         raise Exception("Header lines must be 32 characters long")
     name: str = line[0:11].rstrip(b"\x00").decode("utf-8")
@@ -33,7 +33,7 @@ def read_dbf_header_line(line: str) -> Attribute:
 
 
 # Read the header of a DBF file
-def read_dbf_header(handle: codecs.StreamReaderWriter) -> Schema:
+def read_header(handle: codecs.StreamReaderWriter) -> Schema:
     handle.read(32)
     attributes: list[Attribute] = []
     total_size: int = 0
@@ -42,7 +42,7 @@ def read_dbf_header(handle: codecs.StreamReaderWriter) -> Schema:
         if start[0:2] == b"\r ":  # break if start of body
             break
         line: str = start + handle.read(30)
-        attribute: Attribute = read_dbf_header_line(line)
+        attribute: Attribute = read_header_line(line)
         attributes.append(attribute)
         total_size += attribute.size
 
@@ -51,7 +51,7 @@ def read_dbf_header(handle: codecs.StreamReaderWriter) -> Schema:
 
 
 # Read a single entry in the body of a DBF file
-def read_dbf_body_line(text: str, schema: Schema) -> dict[str, int]:
+def read_body_line(text: str, schema: Schema) -> dict[str, int]:
     if len(text) < schema.total_size:
         raise Exception("Text must be one less than the total size of the schema")
 
@@ -69,7 +69,7 @@ def read_dbf_body_line(text: str, schema: Schema) -> dict[str, int]:
 
 
 # Read the body of a DBF file
-def read_dbf_body(
+def read_body(
     handle: codecs.StreamReaderWriter, schema: Schema
 ) -> list[dict[str, int]]:
     request_size: int = schema.total_size + 1
@@ -81,16 +81,16 @@ def read_dbf_body(
             return None
         if len(line) + 1 < request_size:
             break
-        result.append(read_dbf_body_line(line, schema))
+        result.append(read_body_line(line, schema))
     return result
 
 
 # Read a single DBF file
-def read_dbf(file: str) -> DBase:
+def read(file: str) -> DBase:
     elements: list[dict[str, int]] = []
     with codecs.open(file, "rb") as handle:
-        schema: Schema = read_dbf_header(handle)
-        element: dict[str, int] = read_dbf_body(handle, schema)
+        schema: Schema = read_header(handle)
+        element: dict[str, int] = read_body(handle, schema)
         elements.append(element)
 
     info(f"read file {os.path.basename(file)}")
@@ -98,11 +98,11 @@ def read_dbf(file: str) -> DBase:
 
 
 # Read many DBF files in the same folder
-def read_many_dbf(folder: os.path, files: list[str]) -> list[DBase]:
+def read_many(folder: os.path, files: list[str]) -> list[DBase]:
     result = []
     for file in files:
         path: str = os.path.join(folder, file)
-        single_result: DBase = read_dbf(path)
+        single_result: DBase = read(path)
         result.append(single_result)
     return result
 
