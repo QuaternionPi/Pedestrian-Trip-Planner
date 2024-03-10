@@ -45,4 +45,19 @@ def get_features(folder: str):
 if __name__ == "__main__":
     folder = argv[1]
 
-    get_features(folder)
+    # get_features(folder)
+
+    landuse: gpd.GeoDataFrame = gpd.read_file(
+        os.path.join(folder, "gis_osm_landuse_a_free_1.shp")
+    )
+
+    # the latitude and longitude bounds for the lower mainland
+    xmin = -123.3
+    xmax = -122.5
+    ymin = 49.0
+    ymax = 49.4
+
+    lower_mainland = landuse.cx[xmin:xmax, ymin:ymax]
+
+    lower_mainland.plot(aspect=1)
+    plt.show()
