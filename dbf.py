@@ -92,13 +92,18 @@ def read_body(
 
 
 # Read a single DBF file
-def read(file: str) -> DBase:
+def read(path: str) -> DBase:
+    if os.path.exists(path) == False:
+        raise Exception(f'"{path}" does not exist')
+    if os.path.isfile(path) == False:
+        raise Exception(f'"{path}" is not a file')
+
     elements: list[dict[str, int]] = []
-    with codecs.open(file, "rb") as handle:
+    with codecs.open(path, "rb") as handle:
         schema: Schema = read_header(handle)
         elements: list[dict[str, int]] = read_body(handle, schema)
 
-    filename = os.path.basename(file)
+    filename = os.path.basename(path)
     info(f"read file {filename}")
     return DBase(filename, elements, schema)
 
