@@ -41,23 +41,53 @@ def get_features(folder: str):
     transport_features = dbf.read(transport_path)
 
 
-# main function and entry point of program program execution
-if __name__ == "__main__":
-    folder = argv[1]
-
-    # get_features(folder)
-
-    landuse: gpd.GeoDataFrame = gpd.read_file(
-        os.path.join(folder, "gis_osm_landuse_a_free_1.shp")
-    )
-
+def within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     # the latitude and longitude bounds for the lower mainland
     xmin = -123.3
     xmax = -122.5
     ymin = 49.0
     ymax = 49.4
+    return input.cx[xmin:xmax, ymin:ymax]
 
-    lower_mainland = landuse.cx[xmin:xmax, ymin:ymax]
 
-    lower_mainland.plot(aspect=1)
+def cache_zone(folder: str) -> None:
+    if os.path.exists(folder) == False:
+        raise Exception(f'"{folder}" does not exist')
+    if os.path.isdir(folder) == False:
+        raise Exception(f'"{folder} is not a folder')
+
+    filenames: list[str] = [
+        "gis_osm_landuse_a_free_1.shp",
+        "gis_osm_natural_a_free_1.shp",
+        "gis_osm_places_free_1.shp",
+        "gis_osm_pois_a_free_1.shp",
+        "gis_osm_railways_free_1.shp",
+        "gis_osm_roads_free_1.shp",
+        "gis_osm_traffic_a_free_1.shp",
+        "gis_osm_transport_a_free_1.shp",
+    ]
+
+    path_to_source = lambda filename: os.path.join(folder, filename)
+    path_to_destination = lambda filename: os.path.join("cache", filename)
+
+    for filename in filenames:
+        source = path_to_source(filename)
+
+        input_df: gpd.GeoDataFrame = gpd.read_file(source)
+        output_df: gpd.GeoDataFrame = within_zone(input_df)
+
+        destionation = path_to_destination(filename)
+        output_df.to_file(destionation)
+
+
+# main function and entry point of program program execution
+if __name__ == "__main__":
+    folder = argv[1]
+
+    # if there is no cache then write to it
+    if (os.path.exists("cache") == False) or (len(os.listdir("cache")) != 8 * 5):
+        cache_zone(folder)
+
+    input_df: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_railways_free_1.shp")
+    input_df.plot()
     plt.show()
