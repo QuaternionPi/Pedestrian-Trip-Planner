@@ -2,7 +2,10 @@ from sys import argv
 import dbf
 import os
 import geopandas as gpd
+import pandas as pd
 import matplotlib.pyplot as plt
+
+pd.options.display.max_rows = 5000
 
 
 def get_features(folder: str):
@@ -12,33 +15,21 @@ def get_features(folder: str):
         raise Exception(f'"{folder} is not a folder')
 
     landuse_filename = "gis_osm_landuse_a_free_1.dbf"
-    natural_filename = "gis_osm_natural_a_free_1.dbf"
-    places_filename = "gis_osm_places_free_1.dbf"
-    points_filename = "gis_osm_pois_a_free_1.dbf"
     railways_filename = "gis_osm_railways_free_1.dbf"
     roads_filename = "gis_osm_roads_free_1.dbf"
     traffic_filename = "gis_osm_traffic_a_free_1.dbf"
-    transport_filename = "gis_osm_transport_a_free_1.dbf"
 
     path_to = lambda filename: os.path.join(folder, filename)
 
     landuse_path = path_to(landuse_filename)
-    natural_path = path_to(natural_filename)
-    places_path = path_to(places_filename)
-    points_path = path_to(points_filename)
     railways_path = path_to(railways_filename)
     roads_path = path_to(roads_filename)
     traffic_path = path_to(traffic_filename)
-    transport_path = path_to(transport_filename)
 
     landuse_features = dbf.read(landuse_path)
-    natural_features = dbf.read(natural_path)
-    places_features = dbf.read(places_path)
-    points_features = dbf.read(points_path)
     railways_features = dbf.read(railways_path)
     roads_features = dbf.read(roads_path)
     traffic_features = dbf.read(traffic_path)
-    transport_features = dbf.read(transport_path)
 
 
 def within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -56,15 +47,13 @@ def cache_zone(folder: str) -> None:
     if os.path.isdir(folder) == False:
         raise Exception(f'"{folder} is not a folder')
 
+    if os.path.exists("cache") == False:
+        os.mkdir("cache")
     filenames: list[str] = [
         "gis_osm_landuse_a_free_1.shp",
-        "gis_osm_natural_a_free_1.shp",
-        "gis_osm_places_free_1.shp",
-        "gis_osm_pois_a_free_1.shp",
         "gis_osm_railways_free_1.shp",
         "gis_osm_roads_free_1.shp",
         "gis_osm_traffic_a_free_1.shp",
-        "gis_osm_transport_a_free_1.shp",
     ]
 
     path_to_source = lambda filename: os.path.join(folder, filename)
@@ -80,14 +69,74 @@ def cache_zone(folder: str) -> None:
         output_df.to_file(destionation)
 
 
+def rate_point(x: float, y: float):
+    pass
+
+
+def is_skytrain(row) -> bool:
+    name = str(row.train_name)
+    return "SkyTrain" in name
+
+
+# get metro rail routes, in Vancouver that's the SkyTrain
+def get_metro_rail() -> gpd.GeoDataFrame:
+    railways: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_railways_free_1.shp")
+    railways["train_name"] = railways["name"]
+    mask: gpd.GeoSeries = railways.apply(is_skytrain, axis=1)
+    skytrain = railways[mask]
+    return skytrain
+
+
+def is_parking(row) -> bool:
+    name = str(row.traffic_name)
+    fclass = str(row.fclass)
+    return "parking" in name.lower() or ("parking" in fclass and "under" not in fclass)
+
+
+# get above ground parking lots
+def get_parking() -> gpd.GeoDataFrame:
+    traffic: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_traffic_a_free_1.shp")
+    traffic["traffic_name"] = traffic["name"]
+    mask: gpd.GeoSeries = traffic.apply(is_parking, axis=1)
+    parking = traffic[mask]
+    return parking
+
+
+def get_landuse_positive() -> gpd.GeoDataFrame:
+    landuse: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_landuse_a_free_1.shp")
+    key: str = (
+        "nature_reserve|park|retail|forest|recreation_ground|grass|commercial|meadow|orchard|vineyard"
+    )
+    positive: gpd.GeoDataFrame = landuse[landuse["fclass"].str.contains(key)]
+    return positive
+
+
+def get_landuse_neutral() -> gpd.GeoDataFrame:
+    landuse: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_landuse_a_free_1.shp")
+    key: str = "cemetary|scrub|health"
+    neutral: gpd.GeoDataFrame = landuse[landuse["fclass"].str.contains(key)]
+    return neutral
+
+
+def get_landuse_negative() -> gpd.GeoDataFrame:
+    landuse: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_landuse_a_free_1.shp")
+    key: str = "farmland|military|allotments|quary"
+    negative: gpd.GeoDataFrame = landuse[landuse["fclass"].str.contains(key)]
+    return negative
+
+
 # main function and entry point of program program execution
 if __name__ == "__main__":
     folder = argv[1]
 
-    # if there is no cache then write to it
-    if (os.path.exists("cache") == False) or (len(os.listdir("cache")) != 8 * 5):
+    # if there is no cache of location-limmited files then create one
+    if (os.path.exists("cache") == False) or (len(os.listdir("cache")) != 4 * 5):
+        for filename in os.listdir("cache"):
+            os.remove(f"cache/{filename}")
+        os.rmdir("cache")
         cache_zone(folder)
 
-    input_df: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_railways_free_1.shp")
-    input_df.plot()
-    plt.show()
+    roads: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_roads_free_1.shp")
+    print(roads["fclass"].unique())
+    # roads.plot()
+    # plt.show()
