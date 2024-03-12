@@ -1,35 +1,10 @@
 from sys import argv
-import dbf
 import os
 import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 
 pd.options.display.max_rows = 5000
-
-
-def get_features(folder: str):
-    if os.path.exists(folder) == False:
-        raise Exception(f'"{folder}" does not exist')
-    if os.path.isdir(folder) == False:
-        raise Exception(f'"{folder} is not a folder')
-
-    landuse_filename = "gis_osm_landuse_a_free_1.dbf"
-    railways_filename = "gis_osm_railways_free_1.dbf"
-    roads_filename = "gis_osm_roads_free_1.dbf"
-    traffic_filename = "gis_osm_traffic_a_free_1.dbf"
-
-    path_to = lambda filename: os.path.join(folder, filename)
-
-    landuse_path = path_to(landuse_filename)
-    railways_path = path_to(railways_filename)
-    roads_path = path_to(roads_filename)
-    traffic_path = path_to(traffic_filename)
-
-    landuse_features = dbf.read(landuse_path)
-    railways_features = dbf.read(railways_path)
-    roads_features = dbf.read(roads_path)
-    traffic_features = dbf.read(traffic_path)
 
 
 def within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -137,6 +112,6 @@ if __name__ == "__main__":
         cache_zone(folder)
 
     roads: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_roads_free_1.shp")
-    print(roads["fclass"].unique())
+    print(roads["maxspeed"].unique())
     # roads.plot()
     # plt.show()
