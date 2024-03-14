@@ -1,10 +1,20 @@
 from sys import argv
 import os
+import networkx as nx
+import osmnx as ox
 import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from shapely.geometry import shape, LineString
+from shapely.ops import unary_union
+
+
 pd.options.display.max_rows = 5000
+
+# useful for graphing
+# https://gis.stackexchange.com/questions/239633/how-to-convert-a-shapefile-into-a-graph-in-which-use-dijkstra
+# https://medium.com/analytics-vidhya/interative-map-with-osm-directions-and-networkx-582c4f3435bc
 
 
 def within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -95,7 +105,7 @@ def get_landuse_neutral() -> gpd.GeoDataFrame:
 
 def get_landuse_negative() -> gpd.GeoDataFrame:
     landuse: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_landuse_a_free_1.shp")
-    key: str = "farmland|military|allotments|quary"
+    key: str = "farmland|military|allotments|quarry"
     negative: gpd.GeoDataFrame = landuse[landuse["fclass"].str.contains(key)]
     return negative
 
@@ -112,6 +122,6 @@ if __name__ == "__main__":
         cache_zone(folder)
 
     roads: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_roads_free_1.shp")
-    print(roads["maxspeed"].unique())
-    # roads.plot()
-    # plt.show()
+    pedestrian = roads[roads["fclass"].str.contains("ped")]
+    pedestrian.plot()
+    plt.show()
