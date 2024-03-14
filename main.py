@@ -5,6 +5,7 @@ import osmnx as ox
 import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
+import momepy
 
 from shapely.geometry import shape, LineString
 from shapely.ops import unary_union
@@ -19,10 +20,17 @@ pd.options.display.max_rows = 5000
 
 def within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     # the latitude and longitude bounds for the lower mainland
+    """
     xmin = -123.3
     xmax = -122.5
     ymin = 49.0
     ymax = 49.4
+    """
+    # test bounds to run faster
+    xmin = -123.0
+    xmax = -122.3
+    ymin = 49.0
+    ymax = 49.3
     return input.cx[xmin:xmax, ymin:ymax]
 
 
@@ -110,18 +118,26 @@ def get_landuse_negative() -> gpd.GeoDataFrame:
     return negative
 
 
-# main function and entry point of program program execution
+# main function and entry point of program execution
 if __name__ == "__main__":
     folder = argv[1]
 
     # if there is no cache of location-limmited files then create one
     if (os.path.exists("cache") == False) or (len(os.listdir("cache")) != 4 * 5):
-        for filename in os.listdir("cache"):
-            os.remove(f"cache/{filename}")
-        os.rmdir("cache")
+        if os.path.exists("cache"):
+            for filename in os.listdir("cache"):
+                os.remove(f"cache/{filename}")
+            os.rmdir("cache")
         cache_zone(folder)
 
-    roads: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_roads_free_1.shp")
-    pedestrian = roads[roads["fclass"].str.contains("ped")]
-    pedestrian.plot()
+    roads: gpd.GeoDataFrame = gpd.read_file("cache/gis_osm_roads_free_1.shp")
+    print(roads["fclass"].unique())
+    key: str = "foot"
+    pedestrian: gpd.GeoDataFrame = roads[roads["fclass"].str.contains(key)]
+
+    graph: nx.multigraph.MultiGraph = momepy.gdf_to_nx(roads, approach="primal")
+    graph.remove_edges_from(nx.selfloop_edges(graph))
+
+    re_pedestrian: gpd.GeoDataFrame = momepy.nx_to_gdf(graph)
+    re_pedestrian[1].plot()
     plt.show()
