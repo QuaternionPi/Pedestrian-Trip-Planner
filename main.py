@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import momepy
 from collections import namedtuple
 import util
+from cache_from_osm import cache_from_osm, cache_osm_exists, read_from_cache
 
 
 pd.options.display.max_rows = 5000
@@ -24,50 +25,6 @@ def largest_component(graph: nx.Graph) -> nx.Graph:
     return graph.subgraph(largest_component)
 
 
-def within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    # the latitude and longitude bounds for the lower mainland
-    """
-    xmin = -123.3
-    xmax = -122.5
-    ymin = 49.0
-    ymax = 49.4
-    """
-    # test bounds to run faster
-    xmin = -123.0
-    xmax = -122.3
-    ymin = 49.0
-    ymax = 49.3
-    return input.cx[xmin:xmax, ymin:ymax]
-
-
-def cache_zone(folder: str) -> None:
-    if os.path.exists(folder) == False:
-        raise Exception(f'"{folder}" does not exist')
-    if os.path.isdir(folder) == False:
-        raise Exception(f'"{folder} is not a folder')
-
-    if os.path.exists("cache") == False:
-        os.mkdir("cache")
-    filenames: list[str] = [
-        "gis_osm_landuse_a_free_1.shp",
-        "gis_osm_railways_free_1.shp",
-        "gis_osm_roads_free_1.shp",
-        "gis_osm_traffic_a_free_1.shp",
-    ]
-
-    path_to_source = lambda filename: os.path.join(folder, filename)
-    path_to_destination = lambda filename: os.path.join("cache", filename)
-
-    for filename in filenames:
-        source = path_to_source(filename)
-
-        input_df: gpd.GeoDataFrame = gpd.read_file(source)
-        output_df: gpd.GeoDataFrame = within_zone(input_df)
-
-        destionation = path_to_destination(filename)
-        output_df.to_file(destionation)
-
-
 def rate_point(x: float, y: float):
     pass
 
@@ -79,7 +36,7 @@ def is_skytrain(row) -> bool:
 
 # get metro rail routes, in Vancouver that's the SkyTrain
 def get_metro_rail() -> gpd.GeoDataFrame:
-    railways: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_railways_free_1.shp")
+    railways: gpd.GeoDataFrame = read_from_cache("railways")
     railways["train_name"] = railways["name"]
     mask: gpd.GeoSeries = railways.apply(is_skytrain, axis=1)
     skytrain = railways[mask]
@@ -94,7 +51,7 @@ def is_parking(row) -> bool:
 
 # get above ground parking lots
 def get_parking() -> gpd.GeoDataFrame:
-    traffic: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_traffic_a_free_1.shp")
+    traffic: gpd.GeoDataFrame = read_from_cache("traffic")
     traffic["traffic_name"] = traffic["name"]
     mask: gpd.GeoSeries = traffic.apply(is_parking, axis=1)
     parking = traffic[mask]
@@ -102,7 +59,7 @@ def get_parking() -> gpd.GeoDataFrame:
 
 
 def get_landuse_positive() -> gpd.GeoDataFrame:
-    landuse: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_landuse_a_free_1.shp")
+    landuse: gpd.GeoDataFrame = read_from_cache("landuse")
     key: str = (
         "nature_reserve|park|retail|forest|recreation_ground|grass|commercial|meadow|orchard|vineyard"
     )
@@ -111,14 +68,14 @@ def get_landuse_positive() -> gpd.GeoDataFrame:
 
 
 def get_landuse_neutral() -> gpd.GeoDataFrame:
-    landuse: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_landuse_a_free_1.shp")
+    landuse: gpd.GeoDataFrame = read_from_cache("landuse")
     key: str = "cemetary|scrub|health"
     neutral: gpd.GeoDataFrame = landuse[landuse["fclass"].str.contains(key)]
     return neutral
 
 
 def get_landuse_negative() -> gpd.GeoDataFrame:
-    landuse: gpd.GeoDataFrame = gpd.read_file(f"cache/gis_osm_landuse_a_free_1.shp")
+    landuse: gpd.GeoDataFrame = read_from_cache("landuse")
     key: str = "farmland|military|allotments|quarry"
     negative: gpd.GeoDataFrame = landuse[landuse["fclass"].str.contains(key)]
     return negative
@@ -158,7 +115,7 @@ def shortest_path(
 
 
 def get_roads() -> gpd.GeoDataFrame:
-    raw_roads: gpd.GeoDataFrame = gpd.read_file("cache/gis_osm_roads_free_1.shp")
+    raw_roads: gpd.GeoDataFrame = read_from_cache("roads")
 
     raw_graph: nx.multigraph.Graph = momepy.gdf_to_nx(
         raw_roads,
@@ -184,12 +141,8 @@ if __name__ == "__main__":
     folder = argv[1]
 
     # if there is no cache of location-limmited files then create one
-    if (os.path.exists("cache") == False) or (len(os.listdir("cache")) != 4 * 5):
-        if os.path.exists("cache"):
-            for filename in os.listdir("cache"):
-                os.remove(f"cache/{filename}")
-            os.rmdir("cache")
-        cache_zone(folder)
+    if not cache_osm_exists():
+        cache_from_osm(folder)
 
     roads = get_roads()
     graph = gdf_to_graph(roads)
