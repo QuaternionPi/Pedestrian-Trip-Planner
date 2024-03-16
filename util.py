@@ -1,3 +1,8 @@
+import momepy as mpy
+import networkx as nx
+import geopandas as gpd
+
+
 # adapted from https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
 class TerminalText:
     HEADER = "\033[95m"
@@ -21,3 +26,11 @@ def info(message: any) -> None:
 
 def warning(message: any) -> None:
     print_color(f"[WARN] {message}", TerminalText.WARNING)
+
+
+def gdf_to_graph(gdf: gpd.GeoDataFrame) -> nx.Graph:
+    return mpy.gdf_to_nx(gdf, approach="primal").to_undirected()
+
+
+def graph_to_gdf(graph: nx.MultiGraph):
+    return mpy.nx_to_gdf(graph)[1]

@@ -1,6 +1,6 @@
 import os
 import geopandas as gpd
-
+import util
 
 _datanames = ["railways", "traffic", "roads", "landuse"]
 
@@ -24,6 +24,8 @@ def cache_osm_exists() -> bool:
 
     if not len(os.listdir("cache")) == 4:
         return False
+
+    return True
 
 
 def read_from_cache(filename: str) -> gpd.GeoDataFrame:
@@ -52,6 +54,7 @@ def _cache_dataname(folder: str, dataname: str) -> None:
 
     output_path: str = f"cache/{dataname}/data.shp"
     output_df.to_file(output_path)
+    util.info(f"Cached file '{dataname}'")
 
 
 def _within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -63,8 +66,8 @@ def _within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     ymax = 49.4
     """
     # test bounds to run faster
-    xmin = -123.0
-    xmax = -122.3
-    ymin = 49.0
-    ymax = 49.3
+    xmin = -122.935
+    xmax = -122.90
+    ymin = 49.27
+    ymax = 49.284
     return input.cx[xmin:xmax, ymin:ymax]

@@ -4,9 +4,8 @@ import networkx as nx
 import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
-import momepy
 from collections import namedtuple
-import util
+from util import *
 from cache_from_osm import cache_from_osm, cache_osm_exists, read_from_cache
 
 
@@ -19,6 +18,7 @@ pd.options.display.max_rows = 5000
 Location = namedtuple("Location", ["latitude", "longitude"])
 
 
+# get single largest connected component of graph
 def largest_component(graph: nx.Graph) -> nx.Graph:
     componets = sorted(nx.connected_components(graph), key=len, reverse=True)
     largest_component = componets[0]
@@ -102,7 +102,7 @@ def shortest_path(
     start_node = nearest_node(graph, start)
     end_node = nearest_node(graph, end)
     if start_node == end_node:
-        util.warning(f"path nodes are identical. {start_node}")
+        warning(f"path nodes are identical. {start_node}")
         return []
     try:
         path = nx.dijkstra_path(graph, start_node, end_node, weight=weight)
@@ -117,23 +117,13 @@ def shortest_path(
 def get_roads() -> gpd.GeoDataFrame:
     raw_roads: gpd.GeoDataFrame = read_from_cache("roads")
 
-    raw_graph: nx.multigraph.Graph = momepy.gdf_to_nx(
-        raw_roads,
-        approach="primal",
-    )
+    raw_graph: nx.Graph = gdf_to_graph(raw_roads)
     raw_graph.remove_edges_from(nx.selfloop_edges(raw_graph))
 
     graph = largest_component(raw_graph)
-    roads = graph_to_gdf(graph)
+    crs = {"init": "epsg:4326"}
+    roads = graph_to_gdf(graph).to_crs(crs=crs)
     return roads
-
-
-def gdf_to_graph(gdf: gpd.GeoDataFrame) -> nx.MultiGraph:
-    return momepy.gdf_to_nx(gdf, approach="primal")
-
-
-def graph_to_gdf(graph: nx.MultiGraph):
-    return momepy.nx_to_gdf(graph)[1]
 
 
 # main function and entry point of program execution
@@ -148,12 +138,16 @@ if __name__ == "__main__":
     graph = gdf_to_graph(roads)
 
     path_nodes: list[tuple[float, float]] = shortest_path(
-        graph, Location(-123.0, 49.05), Location(-122.2, 49.25)
+        graph, Location(-122.924745, 49.279980), Location(-122.917446, 49.278985)
     )
 
     path_graph: nx.MultiGraph = graph.subgraph(path_nodes)
 
+    landuse: gpd.GeoDataFrame = read_from_cache("landuse")
+
     roads_plot = roads.plot()
     path_gdf = graph_to_gdf(path_graph)
-    path_gdf.plot(ax=roads_plot, color="red")
+    path_polt = path_gdf.plot(ax=roads_plot, color="red")
+    landuse.plot(ax=path_polt, color="green")
     plt.show()
+    input()
