@@ -76,12 +76,11 @@ def get_landuse_negative() -> gpd.GeoDataFrame:
 def get_roads() -> gpd.GeoDataFrame:
     raw_roads: gpd.GeoDataFrame = read_from_cache("roads")
 
-    raw_graph: nx.Graph = gdf_to_graph(raw_roads)
+    raw_graph: nx.Graph = gdf_to_graph(split_geometry(raw_roads))
     raw_graph.remove_edges_from(nx.selfloop_edges(raw_graph))
 
     graph = largest_component(raw_graph)
-    crs = {"init": "epsg:4326"}
-    roads = graph_to_gdf(graph).to_crs(crs=crs)
+    roads = graph_to_gdf(graph)
     return roads
 
 
@@ -96,6 +95,7 @@ if __name__ == "__main__":
     roads = get_roads()
     graph = gdf_to_graph(roads)
 
+    # Dinning hall to the pond Location(-122.924745, 49.279980), Location(-122.917446, 49.278985)
     path_nodes: list[tuple[float, float]] = shortest_path(
         graph, Location(-122.924745, 49.279980), Location(-122.917446, 49.278985)
     )

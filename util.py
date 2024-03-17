@@ -1,6 +1,7 @@
 import momepy as mpy
 import networkx as nx
 import geopandas as gpd
+from shapely.geometry import LineString
 
 
 # adapted from https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
@@ -34,3 +35,19 @@ def gdf_to_graph(gdf: gpd.GeoDataFrame) -> nx.Graph:
 
 def graph_to_gdf(graph: nx.MultiGraph):
     return mpy.nx_to_gdf(graph)[1]
+
+
+def segment(linestring: LineString) -> map:
+    return map(LineString, zip(linestring.coords, linestring.coords[1:]))
+
+
+def split_geometry(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    result = gpd.GeoDataFrame(columns=["geometry"])
+    edges = gdf.apply(lambda row: segment(row.geometry), axis=1)
+    i = 0
+    for edge in edges:
+        for linestring in edge:
+            result.loc[i] = linestring
+            i += 1
+
+    return result
