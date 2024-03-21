@@ -5,9 +5,9 @@ import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import namedtuple
+from typing import Callable
 from util import *
 from cache_from_osm import cache_from_osm, cache_osm_exists, read_from_cache
-
 from graph import *
 
 pd.options.display.max_rows = 5000  # Max rows pandas will print in a dataframe
@@ -93,6 +93,30 @@ def get_walkable_roads() -> gpd.GeoDataFrame:
     graph = largest_component(raw_graph)
     roads = graph_to_gdf(graph)
     return roads
+
+
+def simple_niceness(pos: tuple[float, float], landuse: gpd.GeoDataFrame) -> float:
+
+    # TODO: How nice is position, defined by landuse
+
+    pass
+
+
+def plan_route(
+    roads_graph: nx.MultiGraph,
+    weight: Callable[[tuple[float, float], gpd.GeoDataFrame], float] = simple_niceness,
+) -> nx.MultiGraph:
+
+    # TODO: Plan a single route from a graph
+
+    pass
+
+
+def to_gpx_studio(path: list[nx.MultiGraph]) -> None:
+
+    # TODO: Map the paths as gpx in GPX Studio
+
+    pass
 
 
 # Main function and entry point of program execution
