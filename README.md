@@ -5,7 +5,7 @@ This is a Final Project for CMPT 353 at Simon Fraser University. It trains a Mac
 
 ## To run
 
-First, download OpenStreetMap data from <https://download.geofabrik.de/north-america/canada/british-columbia.html>
+First, download OpenStreetMap .zip file from <https://download.geofabrik.de/north-america/canada/british-columbia.html>
 and unzip it to a folder.
 
 Then, call the program by running

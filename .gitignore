@@ -1,4 +1,12 @@
-__pycache__
-.vscode
+# Source data files
 .shp
+
+# Cache files
+__pycache__
 cache
+
+# Mac OS files
+.DS_Store
+
+# VS Code files
+.vscode

@@ -123,14 +123,14 @@ def to_gpx_studio(path: list[nx.MultiGraph]) -> None:
 if __name__ == "__main__":
     folder: str = argv[1]
 
-    # if there is no cache of location-limmited files then create one
+    # if there is no cache of location-limited files then create one
     if not cache_osm_exists():
         cache_from_osm(folder)
 
     roads: gpd.GeoDataFrame = get_walkable_roads()
     graph: nx.MultiGraph = gdf_to_graph(roads)
 
-    # Path between the SFU dinning hall to the aq pond
+    # Path between the SFU Dinning Hall to the AQ Pond
     dinning_hall: Location = Location(-122.924745, 49.279980)
     aq_pond: Location = Location(-122.917446, 49.278985)
     path_nodes: list[tuple[float, float]] = shortest_path(graph, dinning_hall, aq_pond)
@@ -138,8 +138,8 @@ if __name__ == "__main__":
     path_gdf: nx.graph = graph_to_gdf(path_graph)
 
     # Plot path and roads, with roads in the background
-    roads_plot: tuple[plt.Figure, plt.Axes | any] = roads.plot()
-    path_polt: tuple[plt.Figure, plt.Axes | any] = path_gdf.plot(
+    roads_plot: tuple[plt.Figure, plt.Axes] = roads.plot()
+    path_polt: tuple[plt.Figure, plt.Axes] = path_gdf.plot(
         ax=roads_plot, color="red"
     )
 
