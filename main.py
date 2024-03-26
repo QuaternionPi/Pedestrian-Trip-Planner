@@ -145,7 +145,7 @@ def save_paths_as_gpx(
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    for i, path in enumerate(paths):
+    for path_number, path in enumerate(paths):
         gpx = GPX()
 
         # Create a GPX track for this path
@@ -169,15 +169,15 @@ def save_paths_as_gpx(
 
         # Define the file path
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        file_path = os.path.join(directory, f"{file_prefix}_{i}_{timestamp}.gpx")
+        file_path = os.path.join(
+            directory, f"{file_prefix}_{path_number}_{timestamp}.gpx"
+        )
 
         # Write the GPX string to a file
         with open(file_path, "w") as gpx_file:
             gpx_file.write(gpx_data)
 
-        print(f"Saved GPX data to {file_path}")
-
-    pass
+        info(f"Saved GPX data to {file_path}")
 
 
 # Main function and entry point of program execution
