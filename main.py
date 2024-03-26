@@ -5,10 +5,12 @@ import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import namedtuple
-from typing import Callable
+from typing import Callable, List
 from util import *
 from cache_from_osm import cache_from_osm, cache_osm_exists, read_from_cache
 from graph import *
+from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment, GPXTrackPoint
+import datetime
 
 pd.options.display.max_rows = 5000  # Max rows pandas will print in a dataframe
 
@@ -117,9 +119,48 @@ def plan_route(
     pass
 
 
-def to_gpx_studio(path: list[nx.MultiGraph]) -> None:
+def save_paths_as_gpx(paths: List[nx.MultiGraph], directory: str = "./", file_prefix: str = "path") -> None:
+    """
+    Converts a list of NetworkX MultiGraph objects into GPX format and saves the data locally.
 
-    # TODO: Map the paths as gpx in GPX Studio
+    :param paths: A list of NetworkX MultiGraph objects, each representing a path.
+    :param directory: The directory to save the GPX files. Defaults to the current directory.
+    :param file_prefix: Prefix for the GPX file names. Defaults to "path".
+
+    Example usage: save_paths_as_gpx(paths, directory="path_to_directory", file_prefix="my_walk")
+    """
+    # Ensure the directory exists
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    for i, path in enumerate(paths):
+        gpx = GPX()
+
+        # Create a GPX track for this path
+        gpx_track = GPXTrack()
+        gpx.tracks.append(gpx_track)
+
+        # Create a segment in our GPX track
+        gpx_segment = GPXTrackSegment()
+        gpx_track.segments.append(gpx_segment)
+
+        # Iterate through each node in the MultiGraph to create track points
+        for node in path.nodes(data=True):
+            lat, lon = node[1]['y'], node[1]['x']  # Assuming 'y' is latitude and 'x' is longitude
+            gpx_segment.points.append(GPXTrackPoint(lat, lon))
+
+        # Serialize the GPX object to a string
+        gpx_data = gpx.to_xml()
+
+        # Define the file path
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        file_path = os.path.join(directory, f"{file_prefix}_{i}_{timestamp}.gpx")
+
+        # Write the GPX string to a file
+        with open(file_path, 'w') as gpx_file:
+            gpx_file.write(gpx_data)
+
+        print(f"Saved GPX data to {file_path}")
 
     pass
 
