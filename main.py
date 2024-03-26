@@ -169,9 +169,8 @@ def save_paths_as_gpx(
 
         # Define the file path
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        file_path = os.path.join(
-            directory, f"{file_prefix}_{path_number}_{timestamp}.gpx"
-        )
+        file_name = f"{file_prefix}_{path_number}_{timestamp}.gpx"
+        file_path = os.path.join(directory, file_name)
 
         # Write the GPX string to a file
         with open(file_path, "w") as gpx_file:
