@@ -80,10 +80,20 @@ def get_landuse_negative() -> gpd.GeoDataFrame:
 
 def walkable(roads: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     # Define a list of road classes considered walkable
-    walkable_classes = ['footway', 'pedestrian', 'path', 'residential', 'living_street']
+    walkable_classes = [
+        "footway",
+        "pedestrian",
+        "path",
+        "residential",
+        "living_street",
+        "unclassified",
+        "service",
+        "track",
+        "tertiary",
+    ]
 
     # Create a boolean mask that identifies rows where the 'fclass' column matches any of the walkable classes
-    walkable_criteria = roads['fclass'].isin(walkable_classes)
+    walkable_criteria = roads["fclass"].isin(walkable_classes)
 
     # Use the mask to filter the DataFrame, selecting only the walkable roads
     walkable_roads: gpd.GeoDataFrame = roads[walkable_criteria]
@@ -119,7 +129,9 @@ def plan_route(
     pass
 
 
-def save_paths_as_gpx(paths: List[nx.MultiGraph], directory: str = "./", file_prefix: str = "path") -> None:
+def save_paths_as_gpx(
+    paths: List[nx.MultiGraph], directory: str = "./", file_prefix: str = "path"
+) -> None:
     """
     Converts a list of NetworkX MultiGraph objects into GPX format and saves the data locally.
 
@@ -146,7 +158,10 @@ def save_paths_as_gpx(paths: List[nx.MultiGraph], directory: str = "./", file_pr
 
         # Iterate through each node in the MultiGraph to create track points
         for node in path.nodes(data=True):
-            lat, lon = node[1]['y'], node[1]['x']  # Assuming 'y' is latitude and 'x' is longitude
+            lat, lon = (
+                node[1]["y"],
+                node[1]["x"],
+            )  # Assuming 'y' is latitude and 'x' is longitude
             gpx_segment.points.append(GPXTrackPoint(lat, lon))
 
         # Serialize the GPX object to a string
@@ -157,7 +172,7 @@ def save_paths_as_gpx(paths: List[nx.MultiGraph], directory: str = "./", file_pr
         file_path = os.path.join(directory, f"{file_prefix}_{i}_{timestamp}.gpx")
 
         # Write the GPX string to a file
-        with open(file_path, 'w') as gpx_file:
+        with open(file_path, "w") as gpx_file:
             gpx_file.write(gpx_data)
 
         print(f"Saved GPX data to {file_path}")
@@ -185,9 +200,7 @@ if __name__ == "__main__":
 
     # Plot path and roads, with roads in the background
     roads_plot: tuple[plt.Figure, plt.Axes] = roads.plot()
-    path_polt: tuple[plt.Figure, plt.Axes] = path_gdf.plot(
-        ax=roads_plot, color="red"
-    )
+    path_polt: tuple[plt.Figure, plt.Axes] = path_gdf.plot(ax=roads_plot, color="red")
 
     # Plot landuse over top of roads and the path
     landuse: gpd.GeoDataFrame = read_from_cache("landuse")
