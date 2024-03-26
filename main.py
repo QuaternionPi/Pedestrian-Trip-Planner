@@ -45,7 +45,7 @@ def is_parking(row) -> bool:
 def get_parking() -> gpd.GeoDataFrame:
     traffic: gpd.GeoDataFrame = read_from_cache("traffic")
 
-    # name is a reserved keyword in pandas, so choose another
+    # "name" is a reserved keyword in pandas, so choose another
     traffic["traffic_name"] = traffic["name"]
 
     mask: gpd.GeoSeries = traffic.apply(is_parking, axis=1)
@@ -77,11 +77,16 @@ def get_landuse_negative() -> gpd.GeoDataFrame:
 
 
 def walkable(roads: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    walkable: gpd.GeoDataFrame = roads
+    # Define a list of road classes considered walkable
+    walkable_classes = ['footway', 'pedestrian', 'path', 'residential', 'living_street']
 
-    # TODO: Decide if roads are walkable
+    # Create a boolean mask that identifies rows where the 'fclass' column matches any of the walkable classes
+    walkable_criteria = roads['fclass'].isin(walkable_classes)
 
-    return walkable
+    # Use the mask to filter the DataFrame, selecting only the walkable roads
+    walkable_roads: gpd.GeoDataFrame = roads[walkable_criteria]
+
+    return walkable_roads
 
 
 def get_walkable_roads() -> gpd.GeoDataFrame:
@@ -123,7 +128,7 @@ def to_gpx_studio(path: list[nx.MultiGraph]) -> None:
 if __name__ == "__main__":
     folder: str = argv[1]
 
-    # if there is no cache of location-limited files then create one
+    # If there is no cache of location-limited files then create one
     if not cache_osm_exists():
         cache_from_osm(folder)
 
