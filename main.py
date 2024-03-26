@@ -116,17 +116,22 @@ def simple_niceness(pos: tuple[float, float], landuse: gpd.GeoDataFrame) -> floa
 
     # TODO: How nice is position, defined by landuse
 
-    pass
+    return 1
 
 
 def plan_route(
     roads_graph: nx.MultiGraph,
+    start: Location,
+    end: Location,
     weight: Callable[[tuple[float, float], gpd.GeoDataFrame], float] = simple_niceness,
 ) -> nx.MultiGraph:
 
-    # TODO: Plan a single route from a graph
+    # TODO: Weight routes on niceness function
 
-    pass
+    path_nodes: list[tuple[float, float]] = shortest_path(roads_graph, start, end)
+    path_graph: nx.MultiGraph = roads_graph.subgraph(path_nodes)
+
+    return path_graph
 
 
 def save_paths_as_gpx(
@@ -187,18 +192,20 @@ if __name__ == "__main__":
     if not cache_osm_exists():
         cache_from_osm(folder)
 
+    dinning_hall: Location = Location(-122.924745, 49.279980)
+    aq_pond: Location = Location(-122.917446, 49.278985)
+
     roads: gpd.GeoDataFrame = get_walkable_roads()
     graph: nx.MultiGraph = gdf_to_graph(roads)
 
-    # Path between the SFU Dinning Hall to the AQ Pond
-    dinning_hall: Location = Location(-122.924745, 49.279980)
-    aq_pond: Location = Location(-122.917446, 49.278985)
-    path_nodes: list[tuple[float, float]] = shortest_path(graph, dinning_hall, aq_pond)
-    path_graph: nx.MultiGraph = graph.subgraph(path_nodes)
-    path_gdf: nx.graph = graph_to_gdf(path_graph)
+    start: Location = dinning_hall
+    end: Location = aq_pond
+    path_graph: nx.MultiGraph = plan_route(graph, start, end)
 
     # Plot path and roads, with roads in the background
     roads_plot: tuple[plt.Figure, plt.Axes] = roads.plot()
+
+    path_gdf: nx.MultiGraph = graph_to_gdf(path_graph)
     path_polt: tuple[plt.Figure, plt.Axes] = path_gdf.plot(ax=roads_plot, color="red")
 
     # Plot landuse over top of roads and the path
