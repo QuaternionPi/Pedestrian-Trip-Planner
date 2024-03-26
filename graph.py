@@ -2,6 +2,7 @@ import networkx as nx
 from collections import namedtuple
 from util import *
 from math import sqrt
+from typing import Callable, List
 
 """
 Collected networkx graph utility functions
@@ -44,7 +45,7 @@ def shortest_path(
     graph: nx.multigraph.Graph,
     start: Location,
     end: Location,
-    weight: str = "length",
+    weight_function: Callable[[tuple[float, float], tuple[float, float]], float],
 ) -> list[tuple[float, float]]:
     # Compute the nearest nodes to the start and end points
     start_node: tuple[float, float] = nearest_node(graph, start)
@@ -60,15 +61,13 @@ def shortest_path(
     search_graph: nx.Graph = nx.Graph()
     search_graph.add_edges_from(graph)
     for u, v in graph.edges():
-        dy: float = u[0] - v[0]
-        dx: float = u[1] - v[1]
-        distance: float = sqrt(dx**2 + dy**2)
-        search_graph.add_edge(u, v, length=distance)
+        weight = weight_function(u, v)
+        search_graph.add_edge(u, v, weight=weight)
 
     # Throw an exception if the dijkstra path finding fails
     try:
         path: list[tuple[float, float]] = nx.dijkstra_path(
-            search_graph, start_node, end_node, weight=weight
+            search_graph, start_node, end_node, weight="weight"
         )
         return path
     except:
