@@ -1,12 +1,15 @@
 # Source data files
 .shp
 
-# Cache files
+# Cache folders
 __pycache__
 cache
 
 # Mac OS files
 .DS_Store
 
-# VS Code files
+# VS Code folder
 .vscode
+
+# GPS data files
+*.gpx
