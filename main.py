@@ -10,7 +10,7 @@ from util import *
 from cache_from_osm import cache_from_osm, cache_osm_exists, read_from_cache
 from graph import *
 from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment, GPXTrackPoint
-import datetime
+from datetime import datetime
 
 pd.options.display.max_rows = 5000  # Max rows pandas will print in a dataframe
 
@@ -131,7 +131,7 @@ def plan_route(
     start: Location,
     end: Location,
     point_weight: Callable[[tuple[float, float]], float] = simple_niceness,
-) -> nx.MultiGraph:
+) -> list[tuple[float, float]]:
 
     # TODO: Weight routes on niceness function
     weight_function: callable[[tuple[float, float], tuple[float, float]], float] = (
@@ -141,13 +141,27 @@ def plan_route(
     path_nodes: list[tuple[float, float]] = shortest_path(
         roads_graph, start, end, weight_function
     )
+    return path_nodes
+
+
+def plan_route_graph(
+    roads_graph: nx.MultiGraph,
+    start: Location,
+    end: Location,
+    point_weight: Callable[[tuple[float, float]], float] = simple_niceness,
+) -> nx.MultiGraph:
+    path_nodes: list[tuple[float, float]] = plan_route(
+        roads_graph, start, end, point_weight
+    )
     path_graph: nx.MultiGraph = roads_graph.subgraph(path_nodes)
 
     return path_graph
 
 
 def save_paths_as_gpx(
-    paths: List[nx.MultiGraph], directory: str = "./", file_prefix: str = "path"
+    paths: list[list[tuple[float, float]]],
+    directory: str = "./",
+    file_prefix: str = "path",
 ) -> None:
     """
     Converts a list of NetworkX MultiGraph objects into GPX format and saves the data locally.
@@ -174,11 +188,8 @@ def save_paths_as_gpx(
         gpx_track.segments.append(gpx_segment)
 
         # Iterate through each node in the MultiGraph to create track points
-        for node in path.nodes(data=True):
-            lat, lon = (
-                node[1]["y"],
-                node[1]["x"],
-            )  # Assuming 'y' is latitude and 'x' is longitude
+        for node in path:
+            lat, lon = (node[1], node[0])
             gpx_segment.points.append(GPXTrackPoint(lat, lon))
 
         # Serialize the GPX object to a string
@@ -212,7 +223,8 @@ if __name__ == "__main__":
 
     start: Location = dinning_hall
     end: Location = aq_pond
-    path_graph: nx.MultiGraph = plan_route(graph, start, end)
+    path_graph: nx.MultiGraph = plan_route_graph(graph, start, end)
+    save_paths_as_gpx([plan_route(graph, start, end)])
 
     # Plot path and roads, with roads in the background
     roads_plot: tuple[plt.Figure, plt.Axes] = roads.plot()
