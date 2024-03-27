@@ -112,6 +112,7 @@ def get_walkable_roads() -> gpd.GeoDataFrame:
     return roads
 
 
+# Simple function to compute niceness based on surounding landuse
 def simple_niceness(pos: tuple[float, float]) -> float:
 
     # TODO: How nice is position, defined by landuse
@@ -119,6 +120,7 @@ def simple_niceness(pos: tuple[float, float]) -> float:
     return 0
 
 
+# Length of an edge
 def length(u: tuple[float, float], v: tuple[float, float]) -> float:
     dy: float = u[0] - v[0]
     dx: float = u[1] - v[1]
@@ -133,17 +135,19 @@ def plan_route(
     point_weight: Callable[[tuple[float, float]], float] = simple_niceness,
 ) -> list[tuple[float, float]]:
 
-    # TODO: Weight routes on niceness function
+    # Function weights the value of an edge
     weight_function: callable[[tuple[float, float], tuple[float, float]], float] = (
         lambda u, v: (length(u, v) + point_weight(u) + point_weight(v))
     )
 
+    # Shortest path on weigthed edges
     path_nodes: list[tuple[float, float]] = shortest_path(
         roads_graph, start, end, weight_function
     )
     return path_nodes
 
 
+# Same as plan route, but returns a graph
 def plan_route_graph(
     roads_graph: nx.MultiGraph,
     start: Location,
@@ -221,6 +225,7 @@ if __name__ == "__main__":
     roads: gpd.GeoDataFrame = get_walkable_roads()
     graph: nx.MultiGraph = gdf_to_graph(roads)
 
+    # Path from start to end
     start: Location = dinning_hall
     end: Location = aq_pond
     path_graph: nx.MultiGraph = plan_route_graph(graph, start, end)
