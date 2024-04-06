@@ -19,10 +19,6 @@ pd.options.display.max_rows = 5000  # Max rows pandas will print in a dataframe
 # https://medium.com/analytics-vidhya/interative-map-with-osm-directions-and-networkx-582c4f3435bc
 
 
-def rate_point(x: float, y: float):
-    pass
-
-
 def is_skytrain(row) -> bool:
     name: str = str(row.train_name)
     return "SkyTrain" in name
@@ -113,11 +109,52 @@ def get_walkable_roads() -> gpd.GeoDataFrame:
 
 
 # Simple function to compute niceness based on surounding landuse
-def simple_niceness(pos: tuple[float, float]) -> float:
+def point_niceness(pos: tuple[float, float]) -> float:
 
     # TODO: How nice is position, defined by landuse
 
     return 0
+
+
+# Simple function to compute niceness based on the road
+def road_niceness(
+    u: tuple[float, float],
+    v: tuple[float, float],
+    maxspeed: int | None,
+    fclass: str | None,
+) -> float:
+    result = 0
+    if maxspeed is int:
+        result += max(maxspeed - 30, 0)
+    if fclass is str and fclass not in [
+        "pedestrian",
+        "living_street",
+        "unclassified",
+        "track",
+        "path",
+        "bridleway",
+        "cycleway",
+        "footway",
+        "steps",
+    ]:
+        result += 40
+
+    return result
+
+
+# Function weights the value of an edge
+def niceness(
+    u: tuple[float, float],
+    v: tuple[float, float],
+    maxspeed: float | None,
+    fclass: str | None,
+) -> float:
+    return length(u, v) * (
+        1
+        + road_niceness(u, v, maxspeed=maxspeed, fclass=fclass)
+        + point_niceness(u)
+        + point_niceness(v)
+    )
 
 
 # Length of an edge
@@ -129,34 +166,20 @@ def length(u: tuple[float, float], v: tuple[float, float]) -> float:
 
 
 def plan_route(
-    roads_graph: nx.MultiGraph,
-    start: Location,
-    end: Location,
-    point_weight: Callable[[tuple[float, float]], float] = simple_niceness,
+    roads_graph: nx.MultiGraph, start: Location, end: Location
 ) -> list[tuple[float, float]]:
-
-    # Function weights the value of an edge
-    weight_function: callable[[tuple[float, float], tuple[float, float]], float] = (
-        lambda u, v: (length(u, v) + point_weight(u) + point_weight(v))
-    )
-
     # Shortest path on weigthed edges
     path_nodes: list[tuple[float, float]] = shortest_path(
-        roads_graph, start, end, weight_function
+        roads_graph, start, end, niceness
     )
     return path_nodes
 
 
 # Same as plan route, but returns a graph
 def plan_route_graph(
-    roads_graph: nx.MultiGraph,
-    start: Location,
-    end: Location,
-    point_weight: Callable[[tuple[float, float]], float] = simple_niceness,
+    roads_graph: nx.MultiGraph, start: Location, end: Location
 ) -> nx.MultiGraph:
-    path_nodes: list[tuple[float, float]] = plan_route(
-        roads_graph, start, end, point_weight
-    )
+    path_nodes: list[tuple[float, float]] = plan_route(roads_graph, start, end)
     path_graph: nx.MultiGraph = roads_graph.subgraph(path_nodes)
 
     return path_graph

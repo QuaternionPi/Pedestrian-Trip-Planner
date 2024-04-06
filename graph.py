@@ -60,8 +60,14 @@ def shortest_path(
     # Compute distance weights to the search graph
     search_graph: nx.Graph = nx.Graph()
     search_graph.add_edges_from(graph)
-    for u, v in graph.edges():
-        weight = weight_function(u, v)
+    graph_maxspeed = nx.get_edge_attributes(graph, "maxspeed")
+    graph_fclass = nx.get_edge_attributes(graph, "fclass")
+    for edge in graph.edges(keys=True):
+        u: tuple[float, float] = edge[0]
+        v: tuple[float, float] = edge[1]
+        maxspeed: float = graph_maxspeed[edge]
+        fclass: str = graph_fclass[edge]
+        weight = weight_function(u, v, maxspeed=maxspeed, fclass=fclass)
         search_graph.add_edge(u, v, weight=weight)
 
     # Throw an exception if the dijkstra path finding fails

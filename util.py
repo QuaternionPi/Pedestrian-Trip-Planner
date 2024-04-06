@@ -50,13 +50,16 @@ def segment(linestring: LineString) -> map:
 
 # Split the edges of a GeoPandas.GeoDataFrame into individual LineStrings that span 2 points
 def split_geometry(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    result = gpd.GeoDataFrame(columns=["geometry"])
-    edges = gdf.apply(lambda row: segment(row.geometry), axis=1)
+    result = gpd.GeoDataFrame(columns=gdf.columns)
+    rows = gdf.apply(lambda row: (segment(row.geometry), row), axis=1)
     i = 0
-    for edge in edges:
-        for linestring in edge:
+    for row in rows:
+        split_geometry = row[0]
+        data = row[1]
+        for geometry in split_geometry:
             # Add line-by-line
-            result.loc[i] = linestring
+            result.loc[i] = data
+            result.loc[i, "geometry"] = geometry
             i += 1
 
     return result
