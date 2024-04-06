@@ -150,8 +150,7 @@ def niceness(
     fclass: str | None,
 ) -> float:
     return length(u, v) * (
-        1
-        + road_niceness(u, v, maxspeed=maxspeed, fclass=fclass)
+        road_niceness(u, v, maxspeed=maxspeed, fclass=fclass)
         + point_niceness(u)
         + point_niceness(v)
     )
@@ -242,17 +241,17 @@ if __name__ == "__main__":
     if not cache_osm_exists():
         cache_from_osm(folder)
 
-    dinning_hall: Location = Location(-122.924745, 49.279980)
-    aq_pond: Location = Location(-122.917446, 49.278985)
+    english_bay: Location = Location(-123.1423, 49.2871)
+    yaletown_roundhouse: Location = Location(-123.1217, 49.2744)
 
     roads: gpd.GeoDataFrame = get_walkable_roads()
     graph: nx.MultiGraph = gdf_to_graph(roads)
 
     # Path from start to end
-    start: Location = dinning_hall
-    end: Location = aq_pond
+    start: Location = english_bay
+    end: Location = yaletown_roundhouse
     path_graph: nx.MultiGraph = plan_route_graph(graph, start, end)
-    save_paths_as_gpx([plan_route(graph, start, end)])
+    # save_paths_as_gpx([plan_route(graph, start, end)])
 
     # Plot path and roads, with roads in the background
     roads_plot: tuple[plt.Figure, plt.Axes] = roads.plot()

@@ -59,7 +59,6 @@ def shortest_path(
 
     # Compute distance weights to the search graph
     search_graph: nx.Graph = nx.Graph()
-    search_graph.add_edges_from(graph)
     graph_maxspeed = nx.get_edge_attributes(graph, "maxspeed")
     graph_fclass = nx.get_edge_attributes(graph, "fclass")
     for edge in graph.edges(keys=True):

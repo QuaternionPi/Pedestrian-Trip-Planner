@@ -85,8 +85,8 @@ def _within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     ymax = 49.4
     """
     # Test bounds to run faster
-    xmin = -122.935
-    xmax = -122.90
-    ymin = 49.27
-    ymax = 49.284
+    xmin = -123.145
+    xmax = -123.116
+    ymin = 49.271
+    ymax = 49.288
     return input.cx[xmin:xmax, ymin:ymax]
