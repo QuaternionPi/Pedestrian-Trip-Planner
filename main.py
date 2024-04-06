@@ -251,7 +251,7 @@ if __name__ == "__main__":
     start: Location = english_bay
     end: Location = yaletown_roundhouse
     path_graph: nx.MultiGraph = plan_route_graph(graph, start, end)
-    # save_paths_as_gpx([plan_route(graph, start, end)])
+    save_paths_as_gpx([plan_route(graph, start, end)])
 
     # Plot path and roads, with roads in the background
     roads_plot: tuple[plt.Figure, plt.Axes] = roads.plot()
