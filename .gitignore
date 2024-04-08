@@ -11,5 +11,5 @@ cache
 # VS Code folder
 .vscode
 
-# GPS data files
+# GPX data files
 *.gpx

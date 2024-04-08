@@ -1,6 +1,6 @@
 # Pedestrian Trip Planner
 
-This is a Final Project for CMPT 353 at Simon Fraser University. It trains a Machine Learning model to create optimally nice pedestrian routes around The City of Vancouver.
+This is a final project for CMPT 353 Computational Data Science at Simon Fraser University. It creates optimally nice pedestrian routes around the City of Vancouver.
 
 ## To run
 
@@ -13,4 +13,4 @@ Then, call the program by running
 python3 main.py <path-to-osm-unzipped>
 ```
 
-The first run of the program will store approximately one gigabyte of data in a local cache.
+The first run of the program will store approximately 3 MB of cache in the project directory.
