@@ -17,11 +17,11 @@ Location = namedtuple("Location", ["latitude", "longitude"])
 def largest_component(graph: nx.MultiGraph) -> nx.MultiGraph:
     # Find all connected components and sort by size
     connected_components: list[nx.MultiGraph] = nx.connected_components(graph)
-    sorted_componets: list[nx.MultiGraph] = sorted(
+    sorted_components: list[nx.MultiGraph] = sorted(
         connected_components, key=len, reverse=True
     )
     # Return largest connected component as a subgraph
-    largest_component: nx.MultiGraph = sorted_componets[0]
+    largest_component: nx.MultiGraph = sorted_components[0]
     return graph.subgraph(largest_component)
 
 

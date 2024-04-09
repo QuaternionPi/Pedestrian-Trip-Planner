@@ -108,7 +108,7 @@ def get_walkable_roads() -> gpd.GeoDataFrame:
     return roads
 
 
-# Simple function to compute niceness based on surounding landuse
+# Simple function to compute niceness based on surrounding landuse
 def point_niceness(pos: tuple[float, float]) -> float:
 
     # TODO: How nice is position, defined by landuse
@@ -167,7 +167,7 @@ def length(u: tuple[float, float], v: tuple[float, float]) -> float:
 def plan_route(
     roads_graph: nx.MultiGraph, start: Location, end: Location
 ) -> list[tuple[float, float]]:
-    # Shortest path on weigthed edges
+    # Shortest path on weighted edges
     path_nodes: list[tuple[float, float]] = shortest_path(
         roads_graph, start, end, niceness
     )
@@ -257,10 +257,10 @@ if __name__ == "__main__":
     roads_plot: tuple[plt.Figure, plt.Axes] = roads.plot()
 
     path_gdf: nx.MultiGraph = graph_to_gdf(path_graph)
-    path_polt: tuple[plt.Figure, plt.Axes] = path_gdf.plot(ax=roads_plot, color="red")
+    path_plot: tuple[plt.Figure, plt.Axes] = path_gdf.plot(ax=roads_plot, color="red")
 
     # Plot landuse over top of roads and the path
     landuse: gpd.GeoDataFrame = read_from_cache("landuse")
-    landuse.plot(ax=path_polt, color="green")
+    landuse.plot(ax=path_plot, color="green")
     plt.show()
     input()

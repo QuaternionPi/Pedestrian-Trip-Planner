@@ -4,7 +4,7 @@ import util
 
 """
 Read in shapefiles
-Trim GeoPandas.GeoDataFrame to fit within spatial paramiters
+Trim GeoPandas.GeoDataFrame to fit within spatial parameters
 Cache a local folder, for performance
 """
 
@@ -44,7 +44,7 @@ def read_from_cache(filename: str) -> gpd.GeoDataFrame:
 def _cache_dataname(folder: str, dataname: str) -> None:
     source_path: str | None = None
 
-    # The shape files may or may not include an _a, choose the apropriate file
+    # The shape files may or may not include an _a, choose the appropriate file
     base_path: str = os.path.join(folder, f"gis_osm_{dataname}_free_1.shp")
     base_path_a: str = os.path.join(folder, f"gis_osm_{dataname}_a_free_1.shp")
     if os.path.exists(base_path):
