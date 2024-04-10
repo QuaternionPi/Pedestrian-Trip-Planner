@@ -1,4 +1,4 @@
-from sys import argv
+import sys
 import os
 import networkx as nx
 import geopandas as gpd
@@ -20,6 +20,19 @@ from shapely.geometry import Point
 
 
 pd.options.display.max_rows = 5000  # Max rows pandas will print in a DataFrame
+
+
+# Function to check if a point is within the specified geographic bounds
+def is_within_bounds(
+    pos: tuple[float, float],
+    xmin: float = -123.3,
+    xmax: float = -122.5,
+    ymin: float = 49.0,
+    ymax: float = 49.4,
+) -> bool:
+    # Default is the longitude and latitude bounds for the lower mainland
+    lon, lat = pos
+    return xmin <= lon <= xmax and ymin <= lat <= ymax
 
 
 def is_skytrain(row) -> bool:
@@ -299,26 +312,71 @@ def save_paths_as_gpx(
 
 # Main function and entry point of program execution
 if __name__ == "__main__":
-    folder: str = argv[1]
+    # Check if the user has provided the minimum required argument (the path to OSM data)
+    if len(sys.argv) < 2:
+        info("You need to provide the path to the OSM data as an argument to run the project.")
+        info()
+        info("Correct formats for running the project are:")
+        info("1) Default mode (using predefined locations for start and end points):")
+        info("   python3 main.py <path-to-osm-unzipped>")
+        info("   Example: python3 main.py ./british-columbia-latest-free.shp")
+        info()
+        info("2) Custom mode (specifying start and end points):")
+        info("   python3 main.py <path-to-osm-unzipped> <start_lon> <start_lat> <end_lon> <end_lat>")
+        info("   Example: python3 main.py ./british-columbia-latest-free.shp -123.1423 49.2871 -123.1217 49.2744")
+        info()
+        info("Please replace <path-to-osm-unzipped> with the actual path to your OSM data,")
+        info("and <start_lon>, <start_lat>, <end_lon>, <end_lat> with your desired coordinates.")
+        sys.exit(1)
+
+    # Extract the path to OSM data from command-line arguments
+    path_to_osm: str = sys.argv[1]
 
     # If there is no cache of location-limited files then create one
     if not cache_osm_exists():
-        cache_from_osm(folder)
+        cache_from_osm(path_to_osm)
 
     # Global declaration of the landuse GeoDataFrame
     global landuse
     # Load landuse data for route analysis in `point_niceness` function
     landuse: gpd.GeoDataFrame = read_from_cache("landuse")
 
-    english_bay: Location = Location(-123.1423, 49.2871)
-    yaletown_roundhouse: Location = Location(-123.1217, 49.2744)
-
     roads: gpd.GeoDataFrame = get_walkable_roads()
     graph: nx.MultiGraph = gdf_to_graph(roads)
 
+    # Default coordinates for English Bay and YaleTown Roundhouse
+    default_start: Location = Location(-123.1423, 49.2871)  # English Bay
+    default_end: Location = Location(-123.1217, 49.2744)  # YaleTown Roundhouse
+
+    # Some other points for testing the code:
+    # Canada Place: -123.1111, 49.2888
+    # Rogers Arena: -123.1091, 49.2778
+    # Metropolis at Metrotown: -123.0000, 49.2273
+    # Simon Fraser University: -122.9202, 49.2791
+
+    # Initialize start and end points with default values
+    start: Location = default_start
+    end: Location = default_end
+
+     # Check user provided custom start and end points
+    if len(sys.argv) == 6:
+        try:
+            # Attempt to parse the custom coordinates
+            start = (float(sys.argv[2]), float(sys.argv[3]))
+            end = (float(sys.argv[4]), float(sys.argv[5]))
+
+            # Validate the provided coordinates
+            if not is_within_bounds(start) or not is_within_bounds(end):
+                warning("Provided points are out of bounds. Using default locations.")
+                start, end = default_start, default_end
+
+        except ValueError:
+            warning("Invalid coordinates format. Using default locations.")
+            start, end = default_start, default_end
+
+    info(f"Using start point: {start} and end point: {end}")
+
     # Path from start to end
-    start: Location = english_bay
-    end: Location = yaletown_roundhouse
     path_graph: nx.MultiGraph = plan_route_graph(graph, start, end)
     save_paths_as_gpx([plan_route(graph, start, end)])
 
@@ -331,4 +389,3 @@ if __name__ == "__main__":
     # Plot landuse over top of roads and the path
     landuse.plot(ax=path_plot, color="green")
     plt.show()
-    input()
