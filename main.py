@@ -11,12 +11,15 @@ from cache_from_osm import cache_from_osm, cache_osm_exists, read_from_cache
 from graph import *
 from gpxpy.gpx import GPX, GPXTrack, GPXTrackSegment, GPXTrackPoint
 from datetime import datetime
+from shapely.geometry import Point
 
-pd.options.display.max_rows = 5000  # Max rows pandas will print in a dataframe
 
 # useful for graphing
 # https://gis.stackexchange.com/questions/239633/how-to-convert-a-shapefile-into-a-graph-in-which-use-dijkstra
 # https://medium.com/analytics-vidhya/interative-map-with-osm-directions-and-networkx-582c4f3435bc
+
+
+pd.options.display.max_rows = 5000  # Max rows pandas will print in a DataFrame
 
 
 def is_skytrain(row) -> bool:
@@ -108,12 +111,73 @@ def get_walkable_roads() -> gpd.GeoDataFrame:
     return roads
 
 
-# Simple function to compute niceness based on surrounding landuse
+# Define a dictionary mapping land use types to niceness scores
+land_use_niceness_scores = {
+    # Positive impact
+    'nature_reserve': 0,
+    'park': 0,
+    'retail': 0,
+    'forest': 0,
+    'recreation_ground': 0,
+    'grass': 0,
+    'commercial': 0,
+    'meadow': 0,
+    'orchard': 0,
+    'vineyard': 0,
+
+    # Neutral impact
+    'residential': 5,
+    'health': 5,
+    'scrub': 10,
+    'cemetary': 10,
+
+    # Negative impact
+    'industrial': 15,
+    'railway': 15,
+    'farmland': 15,
+    'allotments': 15,
+    'quarry': 20,
+    'highway': 20,
+    'construction': 20,
+    'military': 20,
+
+    # May need to scale the scores for balanced route optimization
+}
+
+
 def point_niceness(pos: tuple[float, float]) -> float:
+    """
+    Computes the niceness of a position based on surrounding land use.
 
-    # TODO: How nice is position, defined by landuse
+    Parameters:
+    - pos: The (longitude, latitude) tuple for the location.
 
-    return 0
+    Returns:
+    - The niceness score for the position.
+    """
+    point = Point(pos)
+
+    # May need to adjust buffer radius in degrees
+    # 0.0001 degrees ≈ 10 m in Vancouver
+    buffer_radius = 0.0003
+
+    search_area = point.buffer(buffer_radius)
+
+    # Filter landuse GeoDataFrame for features within the search area
+    # Directly use the global landuse variable
+    intersecting_landuse = landuse[landuse.intersects(search_area)]
+
+    # Initialize the niceness score
+    niceness_score = 0
+
+    # Calculate the niceness score based on intersecting land use types
+    for _, landuse_row in intersecting_landuse.iterrows():
+        landuse_type = landuse_row['fclass']
+        # Update the niceness score based on the land use type's predefined score
+        # Default score is 2 for unspecified land use types
+        niceness_score += land_use_niceness_scores.get(landuse_type, 2)
+
+    return niceness_score
 
 
 # Simple function to compute niceness based on the road
@@ -241,6 +305,11 @@ if __name__ == "__main__":
     if not cache_osm_exists():
         cache_from_osm(folder)
 
+    # Global declaration of the landuse GeoDataFrame
+    global landuse
+    # Load landuse data for route analysis in `point_niceness` function
+    landuse: gpd.GeoDataFrame = read_from_cache("landuse")
+
     english_bay: Location = Location(-123.1423, 49.2871)
     yaletown_roundhouse: Location = Location(-123.1217, 49.2744)
 
@@ -260,7 +329,6 @@ if __name__ == "__main__":
     path_plot: tuple[plt.Figure, plt.Axes] = path_gdf.plot(ax=roads_plot, color="red")
 
     # Plot landuse over top of roads and the path
-    landuse: gpd.GeoDataFrame = read_from_cache("landuse")
     landuse.plot(ax=path_plot, color="green")
     plt.show()
     input()
