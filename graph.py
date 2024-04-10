@@ -9,8 +9,8 @@ Collected networkx graph utility functions
 """
 
 
-# Latitude and longitude coords of a point
-Location = namedtuple("Location", ["latitude", "longitude"])
+# Longitude and latitude coordinates of a point
+Location = namedtuple("Location", ["longitude", "latitude"])
 
 
 # Get single largest connected component of graph
