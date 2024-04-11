@@ -127,33 +127,30 @@ def get_walkable_roads() -> gpd.GeoDataFrame:
 # Define a dictionary mapping land use types to niceness scores
 land_use_niceness_scores = {
     # Positive impact
-    'nature_reserve': 0,
-    'park': 0,
-    'retail': 0,
-    'forest': 0,
-    'recreation_ground': 0,
-    'grass': 0,
-    'commercial': 0,
-    'meadow': 0,
-    'orchard': 0,
-    'vineyard': 0,
-
+    "nature_reserve": 0,
+    "park": 0,
+    "retail": 0,
+    "forest": 0,
+    "recreation_ground": 0,
+    "grass": 0,
+    "commercial": 0,
+    "meadow": 0,
+    "orchard": 0,
+    "vineyard": 0,
     # Neutral impact
-    'residential': 5,
-    'health': 5,
-    'scrub': 10,
-    'cemetary': 10,
-
+    "residential": 5,
+    "health": 5,
+    "scrub": 10,
+    "cemetary": 10,
     # Negative impact
-    'industrial': 15,
-    'railway': 15,
-    'farmland': 15,
-    'allotments': 15,
-    'quarry': 20,
-    'highway': 20,
-    'construction': 20,
-    'military': 20,
-
+    "industrial": 15,
+    "railway": 15,
+    "farmland": 15,
+    "allotments": 15,
+    "quarry": 20,
+    "highway": 20,
+    "construction": 20,
+    "military": 20,
     # May need to scale the scores for balanced route optimization
 }
 
@@ -185,7 +182,7 @@ def point_niceness(pos: tuple[float, float]) -> float:
 
     # Calculate the niceness score based on intersecting land use types
     for _, landuse_row in intersecting_landuse.iterrows():
-        landuse_type = landuse_row['fclass']
+        landuse_type = landuse_row["fclass"]
         # Update the niceness score based on the land use type's predefined score
         # Default score is 2 for unspecified land use types
         niceness_score += land_use_niceness_scores.get(landuse_type, 2)
@@ -314,7 +311,9 @@ def save_paths_as_gpx(
 if __name__ == "__main__":
     # Check if the user has provided the minimum required argument (the path to OSM data)
     if len(sys.argv) < 2:
-        info("You need to provide the path to the OSM data as an argument to run the project.")
+        info(
+            "You need to provide the path to the OSM data as an argument to run the project."
+        )
         info()
         info("Correct formats for running the project are:")
         info("1) Default mode (using predefined locations for start and end points):")
@@ -322,11 +321,19 @@ if __name__ == "__main__":
         info("   Example: python3 main.py ./british-columbia-latest-free.shp")
         info()
         info("2) Custom mode (specifying start and end points):")
-        info("   python3 main.py <path-to-osm-unzipped> <start_lon> <start_lat> <end_lon> <end_lat>")
-        info("   Example: python3 main.py ./british-columbia-latest-free.shp -123.1423 49.2871 -123.1217 49.2744")
+        info(
+            "   python3 main.py <path-to-osm-unzipped> <start_lon> <start_lat> <end_lon> <end_lat>"
+        )
+        info(
+            "   Example: python3 main.py ./british-columbia-latest-free.shp -123.1423 49.2871 -123.1217 49.2744"
+        )
         info()
-        info("Please replace <path-to-osm-unzipped> with the actual path to your OSM data,")
-        info("and <start_lon>, <start_lat>, <end_lon>, <end_lat> with your desired coordinates.")
+        info(
+            "Please replace <path-to-osm-unzipped> with the actual path to your OSM data,"
+        )
+        info(
+            "and <start_lon>, <start_lat>, <end_lon>, <end_lat> with your desired coordinates."
+        )
         sys.exit(1)
 
     # Extract the path to OSM data from command-line arguments
@@ -358,7 +365,7 @@ if __name__ == "__main__":
     start: Location = default_start
     end: Location = default_end
 
-     # Check user provided custom start and end points
+    # Check user provided custom start and end points
     if len(sys.argv) == 6:
         try:
             # Attempt to parse the custom coordinates
@@ -377,8 +384,9 @@ if __name__ == "__main__":
     info(f"Using start point: {start} and end point: {end}")
 
     # Path from start to end
-    path_graph: nx.MultiGraph = plan_route_graph(graph, start, end)
-    save_paths_as_gpx([plan_route(graph, start, end)])
+    path: list[tuple[float, float]] = plan_route(graph, start, end)
+    path_graph: nx.MultiGraph = graph.subgraph(path)
+    save_paths_as_gpx([path])
 
     # Plot path and roads, with roads in the background
     roads_plot: tuple[plt.Figure, plt.Axes] = roads.plot()
