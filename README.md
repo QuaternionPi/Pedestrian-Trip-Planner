@@ -26,7 +26,7 @@ The Pedestrian Trip Planner is a sophisticated tool developed as a final project
 2. You may want to install the required Python packages using `pip`:
 
    ```sh
-   pip install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
 
 ### Data Preparation
