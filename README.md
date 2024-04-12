@@ -24,13 +24,14 @@ This project relies on several third-party libraries that are not included with 
 - **shapely**: Used for geometric calculations and operations.
 - **matplotlib**: Needed for visualizing data and routes.
 - **gpxpy**: Utilized for generating and processing GPX files for GPS devices.
+- **momepy**: Used for converting GeoDataFrames to NetworkX graphs and vice versa.
 
 ### Installation
 
 Ensure `Python 3.x` is installed on your system, then install the required libraries using the following command:
 
   ```sh
-  pip3 install geopandas networkx shapely matplotlib gpxpy
+  pip3 install geopandas networkx shapely matplotlib gpxpy momepy
   ```
 
 Alternatively, there is a `requirements.txt` file provided with the project. You can install all dependencies using:
