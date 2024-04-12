@@ -41,6 +41,8 @@ Alternatively, there is a `requirements.txt` file provided with the project. You
 
 ### Data Preparation
 
+Due to the considerable size of the input geographic data files required for this project, a sample input file is not included in the repository. Please follow the detailed instructions below to download the necessary data from GeoFabrik:
+
 1. Download the British Columbia OpenStreetMap data (british-columbia-latest-free.shp.zip) from [GeoFabrik](https://download.geofabrik.de/north-america/canada/british-columbia.html).
 2. Unzip the downloaded file to a known directory, which will be referred to as `<path-to-osm-unzipped>` in the command-line arguments.
 
@@ -83,8 +85,6 @@ When you run the Pedestrian Trip Planner, you can expect the following outputs b
 - **Route Visualization**: If the route calculation is successful, you will see a visual map representation of the planned route. This visualization helps in understanding the path layout and the interaction with various geographic features.
 
 - **GPX File**: The application will generate a GPX file suitable for use in GPS devices. This file contains the planned route and is ready for navigation purposes. We recommend visualizing GPX files with [GPX Studio](https://gpx.studio/).
-
-- **Caching Messages**: The application will notify you about the caching of data during the first run of the program, essential for optimizing performance.
 
 ## Developers
 
