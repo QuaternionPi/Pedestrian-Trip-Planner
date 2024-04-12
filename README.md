@@ -15,19 +15,29 @@ The Pedestrian Trip Planner is a sophisticated tool developed as a final project
 
 ## Getting Started
 
-### Prerequisites
+### Required Libraries
 
-- Python 3.x
-- Required Python packages: `geopandas`, `networkx`, `shapely`, `matplotlib`, `gpxpy`
+This project relies on several third-party libraries that are not included with the standard Python installation. Below is a list of necessary libraries along with their purpose within the project:
+
+- **geopandas**: For handling and analyzing geospatial data.
+- **networkx**: Essential for graph creation and network analysis.
+- **shapely**: Used for geometric calculations and operations.
+- **matplotlib**: Needed for visualizing data and routes.
+- **gpxpy**: Utilized for generating and processing GPX files for GPS devices.
 
 ### Installation
 
-1. Clone the repository to your local machine.
-2. You may want to install the required Python packages using `pip`:
+Ensure `Python 3.x` is installed on your system, then install the required libraries using the following command:
 
-   ```sh
-   pip3 install -r requirements.txt
-   ```
+  ```sh
+  pip3 install geopandas networkx shapely matplotlib gpxpy
+  ```
+
+Alternatively, there is a `requirements.txt` file provided with the project. You can install all dependencies using:
+
+  ```sh
+  pip3 install -r requirements.txt
+  ```
 
 ### Data Preparation
 
@@ -63,6 +73,18 @@ Run the Pedestrian Trip Planner using one of the following formats:
   ```
 
 Note: The first run of the program will store approximately 230 MB of cache in the project directory to enhance performance.
+
+## Expected Outputs
+
+When you run the Pedestrian Trip Planner, you can expect the following outputs based on your provided inputs:
+
+- **Terminal Feedback**: The application will provide feedback throughout the execution process, offering status updates, error messages, and warnings in a clear, user-friendly manner.
+
+- **Route Visualization**: If the route calculation is successful, you will see a visual map representation of the planned route. This visualization helps in understanding the path layout and the interaction with various geographic features.
+
+- **GPX File**: The application will generate a GPX file suitable for use in GPS devices. This file contains the planned route and is ready for navigation purposes. We recommend visualizing GPX files with [GPX Studio](https://gpx.studio/).
+
+- **Caching Messages**: The application will notify you about the caching of data during the first run of the program, essential for optimizing performance.
 
 ## Developers
 
