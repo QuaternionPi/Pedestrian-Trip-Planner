@@ -78,15 +78,15 @@ def _cache_dataname(folder: str, dataname: str) -> None:
 # Return part of dataframe within zone
 def _within_zone(input: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     # The longitude and latitude bounds for the lower mainland
+    """
     xmin = -123.3
     xmax = -122.5
     ymin = 49.0
     ymax = 49.4
-    # Test bounds to run faster
     """
+    # Test bounds to run faster
     xmin = -123.145
     xmax = -123.116
     ymin = 49.271
     ymax = 49.288
-    """
     return input.cx[xmin:xmax, ymin:ymax]
