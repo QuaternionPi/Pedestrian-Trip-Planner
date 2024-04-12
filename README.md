@@ -13,6 +13,10 @@ The Pedestrian Trip Planner is a sophisticated tool developed as a final project
 - **Interactive User Interface**: Provides clear feedback and instructions through styled terminal messages.
 - **Geographic Bounds Validation**: Ensures user-defined locations are within the project's focus area, the lower mainland of British Columbia.
 
+## TA Note
+
+For ease of use, the program is set up to model Downtown Vancouver to Stanley Park. To change this behaviour see `_within_zone` in `utils.py` and delete the cache folder.
+
 ## Getting Started
 
 ### Required Libraries
